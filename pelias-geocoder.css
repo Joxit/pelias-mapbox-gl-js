@@ -1,0 +1,60 @@
+.pelias-ctrl-geocoder, .pelias-ctrl-geocoder *, .pelias-ctrl-geocoder *:after, .pelias-ctrl-geocoder *:before {
+  -webkit-box-sizing: border-box;
+  -moz-box-sizing: border-box;
+  box-sizing: border-box;
+}
+
+.pelias-ctrl-geocoder {
+  font: 16px 'Helvetica Neue', Arial, Helvetica, sans-serif;
+  position: relative;
+  background-color: #fff;
+  width: 33.3333%;
+  min-width: 328px;
+  max-width: 420px;
+  z-index: 1;
+  border-radius: 1px;
+  box-shadow: 0 2px 4px rgba(0,0,0,0.2), 0 -1px 0px rgba(0,0,0,0.02);
+}
+
+.pelias-ctrl-geocoder input {
+  font-size: 12px;
+  width: 100%;
+  border: 0;
+  height: 42px;
+  margin: 0;
+  padding: 10px 10px 10px 40px;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  overflow: hidden;
+}
+
+.pelias-ctrl-geocoder input:focus {
+  outline: 0;
+  box-shadow: none;
+}
+
+.pelias-ctrl-geocoder .geocoder-icon-search {
+  position: absolute;
+  top: 10px;
+  left: 10px;
+}
+
+.pelias-geocode-results div:hover {
+  background-color: #ddd;
+  cursor: pointer;
+}
+
+.pelias-geocode-results div {
+  border-top: 1px solid rgba(0,0,0,0.1);
+  padding: 5px;
+}
+
+.geocoder-icon {
+  width: 21px;
+  height: 21px;
+  background-repeat: no-repeat;
+}
+
+.geocoder-icon-search {
+  background-image: url(data:image/svg+xml;base64,PHN2ZyB4bWxuczpzdmc9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIiB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSIyMCIgaGVpZ2h0PSIyMCIgdmVyc2lvbj0iMS4xIj4NCiAgPHBhdGggZD0iTTguNSA0QzYgNCA0IDYgNCA4LjUgNCAxMSA2IDEzIDguNSAxMyA5LjQgMTMgMTAuMiAxMi44IDEwLjggMTIuM0wxMC45IDEyLjMgMTQuMyAxNS43QzE0LjUgMTUuOSAxNC43IDE2IDE1IDE2IDE1LjYgMTYgMTYgMTUuNiAxNiAxNSAxNiAxNC43IDE1LjkgMTQuNSAxNS43IDE0LjNMMTIuMyAxMC45IDEyLjMgMTAuOEMxMi44IDEwLjIgMTMgOS40IDEzIDguNSAxMyA2IDExIDQgOC41IDR6TTguNSA1LjVDMTAuMiA1LjUgMTEuNSA2LjggMTEuNSA4LjUgMTEuNSAxMC4yIDEwLjIgMTEuNSA4LjUgMTEuNSA2LjggMTEuNSA1LjUgMTAuMiA1LjUgOC41IDUuNSA2LjggNi44IDUuNSA4LjUgNS41eiIgZmlsbD0iIzAwMCIvPg0KPC9zdmc+);
+}
