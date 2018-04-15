@@ -1,0 +1,64 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset='utf-8' />
+    <title>Pelias geocoding for Mapbox GL JS - Demo</title>
+    <meta name='viewport' content='initial-scale=1,maximum-scale=1,user-scalable=no' />
+    <script src='https://api.tiles.mapbox.com/mapbox-gl-js/v0.44.2/mapbox-gl.js'></script>
+    <link href='https://api.tiles.mapbox.com/mapbox-gl-js/v0.44.2/mapbox-gl.css' rel='stylesheet' />
+    <script src='../pelias-geocoder.js'></script>
+    <link rel='stylesheet' href='../pelias-geocoder.css' type='text/css' />
+
+    <style>
+        body { margin: 0; padding: 0; }
+        #map { position: absolute; top: 0; bottom: 0; width: 100%; }
+        .info {
+          position: absolute;
+          bottom: 0px;
+          right: 0px;
+          background: rgba(255, 255, 255, 0.8);
+          margin: 0;
+          padding: 0px 5px;
+          font: 12px/1.5 "Helvetica Neue", Arial, Helvetica, sans-serif;
+          font-size: 11px;
+        }
+        .info a { color: #0099d8; }
+        .info a:visited { color: #0099d8; }
+        .mapboxgl-ctrl-group {
+          border-radius: 1px;
+          -webkit-box-shadow: 0 2px 4px rgba(0,0,0,0.2), 0 -1px 0px rgba(0,0,0,0.02);
+          box-shadow: 0 2px 4px rgba(0,0,0,0.2), 0 -1px 0px rgba(0,0,0,0.02);
+        }
+    </style>
+</head>
+<body>
+
+<div id='map'></div>
+<div class='info'>
+  © <a href='https://www.openstreetmap.org/copyright' target='_blank'>OpenStreetMap contributors</a> |
+  <a href='http://jawg.io' title='Jawg map style' target='_blank'>Jawg</a>
+</div>
+
+<script>
+mapboxgl.accessToken = '*';
+ var map = new mapboxgl.Map({
+   container: 'map',
+   style: 'https://tile.jawg.io/jawg-sunny.json?access-token=P4QzOCt4wWfPKfuPuMF1UQSupLKLsO7ZC4DBRF6GAoC0AcaSAKRvD4v2vix948q7',
+   hash: true,
+   zoom: 8,
+   minZoom: 0,
+   maxZoom: 22,
+   hash: true,
+   center: [2.3590, 48.8625]
+ });
+
+ map.addControl(new mapboxgl.NavigationControl());
+ map.addControl(new mapboxgl.ScaleControl());
+ map.addControl(new PeliasGeocoder({
+     params: { 'access-token': 'P4QzOCt4wWfPKfuPuMF1UQSupLKLsO7ZC4DBRF6GAoC0AcaSAKRvD4v2vix948q7' },
+     url: 'https://places.jawg.io/v1'
+ }));
+</script>
+
+</body>
+</html>

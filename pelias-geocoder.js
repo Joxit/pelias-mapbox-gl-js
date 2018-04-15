@@ -36,8 +36,13 @@ PeliasGeocoder.prototype.onAdd = function(map) {
       clearTimeout(this._timeoutId);
     }
     this._timeoutId = setTimeout(function() {
-        self.search({text: value}, function(result) {
-          self._showResults(result)
+        self.search({text: value}, function(err, result) {
+          if (err) {
+            return self._showError(err);
+          }
+          if (result) {
+            return self._showResults(result)
+          }
         });
     }, 250);
   });
@@ -69,7 +74,16 @@ PeliasGeocoder.prototype.search = function(opts, callback) {
     + (self.opts.sources ? ('&sources=' + self.opts.sources) : '');
   var req = new XMLHttpRequest();
   req.addEventListener('load', function() {
-    callback(JSON.parse(this.responseText))
+    switch (this.status) {
+      case 200:
+        return callback(null, JSON.parse(this.responseText));
+      case 400:
+        return callback('You sent a bad request.');
+      case 401:
+        return callback('You are not authorized to use this geocode.');
+      case 500:
+        return callback('This server can not answer yet.');
+    }
   })
   req.open('GET', url);
   req.send();
@@ -126,6 +140,15 @@ PeliasGeocoder.prototype._removeDuplicates = function(features) {
   return features.filter(function(e, i) {
     return !e.remove;;
   })
+}
+
+PeliasGeocoder.prototype._showError = function(err) {
+  var self = this;
+  var el = document.createElement('div');
+  el.innerHTML = err;
+
+  self._resultsEl.removeAll();
+  self._resultsEl.appendChild(el);
 }
 
 PeliasGeocoder.prototype._areNear = function(c1, c2) {
