@@ -3,6 +3,10 @@ function PeliasGeocoder(opts) {
   this.opts = {};
   this.opts.placeholder = opts.placeholder || 'Search';
   this.opts.url = opts.url;
+  this.opts.flyTo = opts.flyTo === undefined ? true : opts.flyTo;
+  this.opts.sources = opts.sources;
+  this.opts.useFocusPoint = opts.useFocusPoint;
+  this.opts.removeDuplicates = opts.removeDuplicates === undefined ? true : opts.removeDuplicates;
   if (opts.params) {
     this.params = '';
     for (var i in opts.params) {
@@ -44,7 +48,7 @@ PeliasGeocoder.prototype.onAdd = function(map) {
             return self._showResults(result)
           }
         });
-    }, 250);
+    }, 350);
   });
 
   this._resultsEl = document.createElement('div');
@@ -71,7 +75,8 @@ PeliasGeocoder.prototype.search = function(opts, callback) {
   }
   var url = self.opts.url + '/search?text=' + opts.text
     + (self.params ? this.params : '')
-    + (self.opts.sources ? ('&sources=' + self.opts.sources) : '');
+    + (self.opts.sources ? ('&sources=' + self.opts.sources) : '')
+    + (self.opts.useFocusPoint ? ('&focus.point.lat=' + map.getCenter().lat + '&focus.point.lon=' + map.getCenter().lng) : '');
   var req = new XMLHttpRequest();
   req.addEventListener('load', function() {
     switch (this.status) {
@@ -104,10 +109,15 @@ PeliasGeocoder.prototype._showResults = function(results) {
     el.onclick = function() {
       self._resultsEl.removeAll();
       self._text = self._inputEl.value = e.properties.label;
-      self._map.flyTo({
+      var cameraOpts = {
         center: e.geometry.coordinates,
         zoom: self._getBestZoom(e)
-      });
+      };
+      if (self.opts.flyTo) {
+        self._map.flyTo(cameraOpts);
+      } else {
+        self._map.jumpTo(cameraOpts);
+      }
     }
     self._resultsEl.appendChild(el);
   })
@@ -117,6 +127,9 @@ PeliasGeocoder.prototype._removeDuplicates = function(features) {
   var results = [];
   var groupBy = {};
   var self = this;
+  if (!self.opts.removeDuplicates) {
+    return features;
+  }
   features.forEach(function(e) {
     var label = e.properties.label;
     if (!groupBy[label]) {
@@ -162,7 +175,7 @@ PeliasGeocoder.prototype._between = function(x, min, max) {
 PeliasGeocoder.prototype._getBestZoom = function(e) {
   var bbox = e.bbox;
   if (!bbox) {
-    return e.properties.street ? 18 : 14;
+    return (['address', 'venue', 'street'].indexOf(e.properties.layer) > -1) ? 18 : 14;
   }
   return 8.5 - Math.log10(Math.abs(bbox[2] - bbox[0]) * Math.abs(bbox[3] - bbox[1]));
 }
