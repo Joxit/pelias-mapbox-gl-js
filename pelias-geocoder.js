@@ -7,6 +7,7 @@ function PeliasGeocoder(opts) {
   this.opts.sources = opts.sources;
   this.opts.useFocusPoint = opts.useFocusPoint;
   this.opts.removeDuplicates = opts.removeDuplicates === undefined ? true : opts.removeDuplicates;
+  this.opts.onSubmitOnly = opts.onSubmitOnly;
   if (opts.params) {
     this.params = '';
     for (var i in opts.params) {
@@ -31,9 +32,14 @@ PeliasGeocoder.prototype.onAdd = function(map) {
 
   this._inputEl.addEventListener('keyup', function(e) {
     var value = self._inputEl.value;
-    if (e.keyCode !== 13 && (!value || value.trim().length === 0 || self._text == value.trim())) {
+    // keyCodes: 13 => Enter
+    if (e.keyCode !== 13 && (!value || value.trim().length === 0 || self._text == value.trim() || self.opts.onSubmitOnly)) {
+      if (!value) {
+        self._resultsEl.removeAll();
+      }
       return;
     }
+
     value = value.trim();
     self._text = value;
     if (this._timeoutId !== undefined) {
@@ -44,11 +50,11 @@ PeliasGeocoder.prototype.onAdd = function(map) {
           if (err) {
             return self._showError(err);
           }
-          if (result) {
+          if (result && value == self._text) {
             return self._showResults(result)
           }
         });
-    }, 350);
+    }, (self.opts.onSubmitOnly || e.keyCode === 13) ? 0 : 350);
   });
 
   this._resultsEl = document.createElement('div');
