@@ -106,7 +106,10 @@ PeliasGeocoder.prototype._showResults = function(results) {
     el.innerHTML = e.properties.label;
     el.className = ''
     el.feature = e;
-    el.onclick = function() {
+    el.onmousedown = function() {
+      return false;
+    }
+    el.onmouseup = function() {
       self._resultsEl.removeAll();
       self._text = self._inputEl.value = e.properties.label;
       var cameraOpts = {
@@ -118,6 +121,7 @@ PeliasGeocoder.prototype._showResults = function(results) {
       } else {
         self._map.jumpTo(cameraOpts);
       }
+      return false;
     }
     self._resultsEl.appendChild(el);
   })
