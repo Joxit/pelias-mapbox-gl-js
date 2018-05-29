@@ -122,7 +122,7 @@ PeliasGeocoder.prototype._showResults = function(results) {
         center: e.geometry.coordinates,
         zoom: self._getBestZoom(e)
       };
-      if (self.opts.flyTo) {
+      if (self._useFlyTo(cameraOpts)) {
         self._map.flyTo(cameraOpts);
       } else {
         self._map.jumpTo(cameraOpts);
@@ -131,6 +131,17 @@ PeliasGeocoder.prototype._showResults = function(results) {
     }
     self._resultsEl.appendChild(el);
   })
+};
+
+PeliasGeocoder.prototype._useFlyTo = function(cameraOpts) {
+  if (this.opts.flyTo == 'hybrid') {
+    return this._areNear(cameraOpts.center, this._latlngToArray(this._map.getCenter()), this._getFlyToToleranceByZoom(this._map.getZoom()));
+  }
+  return this.opts.flyTo;
+};
+
+PeliasGeocoder.prototype._getFlyToToleranceByZoom = function(zoom) {
+  return zoom < 3 ? 360 : 160 / Math.pow(zoom + 1, 2);
 }
 
 PeliasGeocoder.prototype._removeDuplicates = function(features) {
@@ -154,7 +165,7 @@ PeliasGeocoder.prototype._removeDuplicates = function(features) {
         return;
       }
       for (j = i + 1; j < groupBy[label].length; j++) {
-        if(!groupBy[label][j].remove && self._areNear(e.geometry.coordinates, groupBy[label][j].geometry.coordinates)) {
+        if(!groupBy[label][j].remove && self._areNear(e.geometry.coordinates, groupBy[label][j].geometry.coordinates, 0.2)) {
           groupBy[label][j].remove = true;
         }
       }
@@ -174,8 +185,12 @@ PeliasGeocoder.prototype._showError = function(err) {
   self._resultsEl.appendChild(el);
 }
 
-PeliasGeocoder.prototype._areNear = function(c1, c2) {
-  return this._between(c1[0], c2[0] - 0.2, c2[0] + 0.2) && this._between(c1[1], c2[1] - 0.2, c2[1] + 0.2);
+PeliasGeocoder.prototype._areNear = function(c1, c2, tolerance) {
+  return this._between(c1[0], c2[0] - tolerance, c2[0] + tolerance) && this._between(c1[1], c2[1] - tolerance, c2[1] + tolerance);
+}
+
+PeliasGeocoder.prototype._latlngToArray = function(center) {
+  return [center.lng, center.lat];
 }
 
 PeliasGeocoder.prototype._between = function(x, min, max) {
