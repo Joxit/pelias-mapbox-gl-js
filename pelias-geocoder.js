@@ -8,12 +8,18 @@ function PeliasGeocoder(opts) {
   this.opts.useFocusPoint = opts.useFocusPoint;
   this.opts.removeDuplicates = opts.removeDuplicates === undefined ? true : opts.removeDuplicates;
   this.opts.onSubmitOnly = opts.onSubmitOnly;
+  if (opts.marker) {
+    this.opts.marker = {};
+    this.opts.marker.icon = opts.marker.icon || 'marker-15';
+    this.opts.marker.anchor = opts.marker.anchor || 'bottom';
+  }
   if (opts.params) {
     this.params = '';
     for (var i in opts.params) {
       this.params += '&' + i + '=' + opts.params[i];
     }
   }
+  this.layerId = 'pelias-mapbox-gl-js';
 }
 
 PeliasGeocoder.prototype.onAdd = function(map) {
@@ -36,6 +42,7 @@ PeliasGeocoder.prototype.onAdd = function(map) {
     if (e.keyCode !== 13 && (!value || value.trim().length === 0 || self._text == value.trim() || self.opts.onSubmitOnly)) {
       if (!value) {
         self._resultsEl.removeAll();
+        self._removeMarkers();
       }
       return;
     }
@@ -107,7 +114,8 @@ PeliasGeocoder.prototype.getDefaultPosition = function() {
 PeliasGeocoder.prototype._showResults = function(results) {
   var self = this;
   self._resultsEl.removeAll();
-  self._removeDuplicates(results.features).forEach(function(e) {
+  var features = self._removeDuplicates(results.features);
+  features.forEach(function(e) {
     var el = document.createElement('div');
     el.innerHTML = e.properties.label;
     el.className = ''
@@ -130,6 +138,7 @@ PeliasGeocoder.prototype._showResults = function(results) {
       return false;
     }
     self._resultsEl.appendChild(el);
+    self._updateMarkers(features);
   })
 };
 
@@ -204,3 +213,39 @@ PeliasGeocoder.prototype._getBestZoom = function(e) {
   }
   return 8.5 - Math.log10(Math.abs(bbox[2] - bbox[0]) * Math.abs(bbox[3] - bbox[1]));
 }
+
+PeliasGeocoder.prototype._removeMarkers = function() {
+  if (!this.opts.marker) {
+    return;
+  }
+  if (this._map.getSource(this.layerId)) {
+    this._map.removeLayer(this.layerId);
+    this._map.removeSource(this.layerId);
+  }
+}
+
+PeliasGeocoder.prototype._updateMarkers = function(features) {
+  if (!this.opts.marker) {
+    return;
+  }
+  if (this._map.getSource(this.layerId)) {
+    this._map.removeLayer(this.layerId);
+    this._map.removeSource(this.layerId);
+  }
+  this._map.addLayer({
+    "id": this.layerId,
+    "type": "symbol",
+    "source": {
+        "type": "geojson",
+        "data": {
+          "type": "FeatureCollection",
+          "features": features
+        }
+    },
+    "layout": {
+        "icon-allow-overlap": true,
+        "icon-image": this.opts.marker.icon,
+        "text-anchor": this.opts.marker.anchor
+    }
+  })
+};
