@@ -13,7 +13,8 @@ Pelias Geocoding API plugin for Mapbox GL JS maps.
 -   Add custom parameters to add in requests. (`opts.params`: Object)
 -   Choose specific sources for requests (`oa`, `osm`, `wof`, `gn`). (`opts.sources`: Array or String)
 -   Send request only when you use Enter key. (`opts.onSubmitOnly`: Boolean)
--   Add marker to show results. The marker must be in the sprites of your style. (`opts.marker`: Object `{ icon: 'marker-15', anchor: 'bottom' }`)
+-   Add marker to show results. The marker must be in the sprites of your style. (`opts.marker`: Object or Boolean `{ icon: 'marker-15', anchor: 'bottom' }`)
+-   Add polygon for localities objects from wof. (`opts.wof`: Object or Boolean)
 -   0 dependencies.
 
 ## [GitHub Pages](https://joxit.github.io/pelias-mapbox-gl-js) and [Live Demo](https://joxit.github.io/pelias-mapbox-gl-js/demo)

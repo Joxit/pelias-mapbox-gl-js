@@ -13,13 +13,21 @@ function PeliasGeocoder(opts) {
     this.opts.marker.icon = opts.marker.icon || 'marker-15';
     this.opts.marker.anchor = opts.marker.anchor || 'bottom';
   }
+  if (opts.wof) {
+    this.opts.wof = {}
+    this.opts.wof.url = opts.wof.url || 'https://raw.githubusercontent.com/whosonfirst-data/whosonfirst-data/master/data/';
+    this.getWOFURL = opts.wof.getWOFURL || this.getDefaultWOFURLFunction();
+    this.opts.wof.fillColor = opts.wof.fillColor || "rgba(200, 40, 32, 0.2)";
+    this.opts.wof.fillOutlineColor = opts.wof.fillOutlineColor || "rgba(200, 40, 32, 0.8)";
+  }
   if (opts.params) {
     this.params = '';
     for (var i in opts.params) {
       this.params += '&' + i + '=' + opts.params[i];
     }
   }
-  this.layerId = 'pelias-mapbox-gl-js';
+  this.markerLayerId = 'pelias-mapbox-gl-js-marker';
+  this.polygonLayerId = 'pelias-mapbox-gl-js-polygon';
 }
 
 PeliasGeocoder.prototype.onAdd = function(map) {
@@ -43,6 +51,7 @@ PeliasGeocoder.prototype.onAdd = function(map) {
       if (!value) {
         self._resultsEl.removeAll();
         self._removeMarkers();
+        self._removePolygon();
       }
       return;
     }
@@ -135,6 +144,9 @@ PeliasGeocoder.prototype._showResults = function(results) {
       } else {
         self._map.jumpTo(cameraOpts);
       }
+      if (e.properties.source === 'whosonfirst' && ['macroregion', 'region', 'macrocounty', 'county', 'locality', 'localadmin', 'borough', 'macrohood', 'neighbourhood', 'postalcode'].indexOf(e.properties.layer) >= 0) {
+        self._showPolygon(e.properties.id);
+      }
       return false;
     }
     self._resultsEl.appendChild(el);
@@ -218,9 +230,9 @@ PeliasGeocoder.prototype._removeMarkers = function() {
   if (!this.opts.marker) {
     return;
   }
-  if (this._map.getSource(this.layerId)) {
-    this._map.removeLayer(this.layerId);
-    this._map.removeSource(this.layerId);
+  if (this._map.getSource(this.markerLayerId)) {
+    this._map.removeLayer(this.markerLayerId);
+    this._map.removeSource(this.markerLayerId);
   }
 }
 
@@ -228,12 +240,9 @@ PeliasGeocoder.prototype._updateMarkers = function(features) {
   if (!this.opts.marker) {
     return;
   }
-  if (this._map.getSource(this.layerId)) {
-    this._map.removeLayer(this.layerId);
-    this._map.removeSource(this.layerId);
-  }
+  self._removeMarkers();
   this._map.addLayer({
-    "id": this.layerId,
+    "id": this.markerLayerId,
     "type": "symbol",
     "source": {
         "type": "geojson",
@@ -249,3 +258,46 @@ PeliasGeocoder.prototype._updateMarkers = function(features) {
     }
   })
 };
+
+PeliasGeocoder.prototype._removePolygon = function() {
+  if (!this.opts.wof) {
+    return;
+  }
+  if (this._map.getSource(this.polygonLayerId)) {
+    this._map.removeLayer(this.polygonLayerId);
+    this._map.removeSource(this.polygonLayerId);
+  }
+}
+
+PeliasGeocoder.prototype._showPolygon = function(id) {
+  if (!this.opts.wof) {
+    return;
+  }
+  this._removePolygon();
+  this._map.addLayer({
+    "id": this.polygonLayerId,
+    "type": "fill",
+    "source": {
+        "type": "geojson",
+        "data": this.getWOFURL(id)
+    },
+    "paint": {
+        "fill-color": this.opts.wof.fillColor,
+        "fill-outline-color": this.opts.wof.fillOutlineColor
+    }
+  })
+}
+
+PeliasGeocoder.prototype.getDefaultWOFURLFunction = function() {
+  var self = this;
+  return function(id) {
+    var strId = id.toString();
+    var parts = [];
+    while( strId.length ){
+      var part = strId.substr(0, 3);
+      parts.push(part);
+      strId = strId.substr(3);
+    }
+    return self.opts.wof.url + parts.join('/') + '/' + id + '.geojson';
+  }
+}
