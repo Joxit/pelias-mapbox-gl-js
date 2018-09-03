@@ -28,6 +28,9 @@ function PeliasGeocoder(opts) {
   }
   this.markerLayerId = 'pelias-mapbox-gl-js-marker';
   this.polygonLayerId = 'pelias-mapbox-gl-js-polygon';
+
+  this._removeMarkers = this._removeSources.bind(this, this.opts.marker, this.markerLayerId);
+  this._removePolygon = this._removeSources.bind(this, this.opts.wof, this.polygonLayerId);
 }
 
 PeliasGeocoder.prototype.onAdd = function(map) {
@@ -146,6 +149,8 @@ PeliasGeocoder.prototype._showResults = function(results) {
       }
       if (e.properties.source === 'whosonfirst' && ['macroregion', 'region', 'macrocounty', 'county', 'locality', 'localadmin', 'borough', 'macrohood', 'neighbourhood', 'postalcode'].indexOf(e.properties.layer) >= 0) {
         self._showPolygon(e.properties.id);
+      } else {
+        self._removePolygon();
       }
       return false;
     }
@@ -226,13 +231,13 @@ PeliasGeocoder.prototype._getBestZoom = function(e) {
   return 8.5 - Math.log10(Math.abs(bbox[2] - bbox[0]) * Math.abs(bbox[3] - bbox[1]));
 }
 
-PeliasGeocoder.prototype._removeMarkers = function() {
-  if (!this.opts.marker) {
+PeliasGeocoder.prototype._removeSources = function(enabled, layer) {
+  if (!enabled) {
     return;
   }
-  if (this._map.getSource(this.markerLayerId)) {
-    this._map.removeLayer(this.markerLayerId);
-    this._map.removeSource(this.markerLayerId);
+  if (this._map.getSource(layer)) {
+    this._map.removeLayer(layer);
+    this._map.removeSource(layer);
   }
 }
 
@@ -240,7 +245,7 @@ PeliasGeocoder.prototype._updateMarkers = function(features) {
   if (!this.opts.marker) {
     return;
   }
-  self._removeMarkers();
+  this._removeMarkers();
   this._map.addLayer({
     "id": this.markerLayerId,
     "type": "symbol",
@@ -258,16 +263,6 @@ PeliasGeocoder.prototype._updateMarkers = function(features) {
     }
   })
 };
-
-PeliasGeocoder.prototype._removePolygon = function() {
-  if (!this.opts.wof) {
-    return;
-  }
-  if (this._map.getSource(this.polygonLayerId)) {
-    this._map.removeLayer(this.polygonLayerId);
-    this._map.removeSource(this.polygonLayerId);
-  }
-}
 
 PeliasGeocoder.prototype._showPolygon = function(id) {
   if (!this.opts.wof) {
