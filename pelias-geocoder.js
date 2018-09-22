@@ -17,8 +17,8 @@ function PeliasGeocoder(opts) {
     this.opts.wof = {}
     this.opts.wof.url = opts.wof.url || 'https://raw.githubusercontent.com/whosonfirst-data/whosonfirst-data/master/data/';
     this.getWOFURL = opts.wof.getWOFURL || this.getDefaultWOFURLFunction();
-    this.opts.wof.fillColor = opts.wof.fillColor || "rgba(200, 40, 32, 0.2)";
-    this.opts.wof.fillOutlineColor = opts.wof.fillOutlineColor || "rgba(200, 40, 32, 0.8)";
+    this.opts.wof.fillColor = opts.wof.fillColor || "rgba(200, 40, 32, 0.1)";
+    this.opts.wof.fillOutlineColor = opts.wof.fillOutlineColor || "rgba(200, 40, 32, 0.7)";
   }
   if (opts.params) {
     this.params = '';
@@ -148,7 +148,7 @@ PeliasGeocoder.prototype._showResults = function(results) {
         self._map.jumpTo(cameraOpts);
       }
       if (e.properties.source === 'whosonfirst' && ['macroregion', 'region', 'macrocounty', 'county', 'locality', 'localadmin', 'borough', 'macrohood', 'neighbourhood', 'postalcode'].indexOf(e.properties.layer) >= 0) {
-        self._showPolygon(e.properties.id);
+        self._showPolygon(e.properties.id, cameraOpts.zoom);
       } else {
         self._removePolygon();
       }
@@ -264,7 +264,7 @@ PeliasGeocoder.prototype._updateMarkers = function(features) {
   })
 };
 
-PeliasGeocoder.prototype._showPolygon = function(id) {
+PeliasGeocoder.prototype._showPolygon = function(id, bestZoom) {
   if (!this.opts.wof) {
     return;
   }
@@ -278,7 +278,10 @@ PeliasGeocoder.prototype._showPolygon = function(id) {
     },
     "paint": {
         "fill-color": this.opts.wof.fillColor,
-        "fill-outline-color": this.opts.wof.fillOutlineColor
+        "fill-outline-color": this.opts.wof.fillOutlineColor,
+        "fill-opacity": {
+          "stops": [[bestZoom + 3, 1], [bestZoom + 4, 0]]
+        }
     }
   })
 }
