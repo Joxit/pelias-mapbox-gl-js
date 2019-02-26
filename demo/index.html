@@ -1,84 +1,170 @@
 <!DOCTYPE html>
-<html>
-<head>
-    <meta charset='utf-8' />
+<html lang="en">
+  <head>
+    <meta charset='utf-8'/>
     <title>Pelias geocoding for Mapbox GL JS - Demo</title>
-    <meta name='viewport' content='initial-scale=1,maximum-scale=1,user-scalable=no' />
+    <meta name='viewport' content='initial-scale=1,maximum-scale=1,user-scalable=no'/>
     <script src='https://api.tiles.mapbox.com/mapbox-gl-js/v0.44.2/mapbox-gl.js'></script>
-    <link href='https://api.tiles.mapbox.com/mapbox-gl-js/v0.44.2/mapbox-gl.css' rel='stylesheet' />
+    <link href='https://api.tiles.mapbox.com/mapbox-gl-js/v0.44.2/mapbox-gl.css' rel='stylesheet'/>
     <script src='../pelias-geocoder.js'></script>
-    <link rel='stylesheet' href='../pelias-geocoder.css' type='text/css' />
-
+    <link rel='stylesheet' href='../pelias-geocoder.css' type='text/css'/>
     <style>
-        body { margin: 0; padding: 0; }
-        #map { position: absolute; top: 0; bottom: 0; width: 100%; }
-        .info {
-          position: absolute;
-          bottom: 0px;
-          right: 0px;
-          background: rgba(255, 255, 255, 0.8);
-          margin: 0;
-          padding: 0px 5px;
-          font: 12px/1.5 "Helvetica Neue", Arial, Helvetica, sans-serif;
-          font-size: 11px;
+      body {
+        margin: 0;
+        padding: 0;
+      }
+
+      #map {
+        position: absolute;
+        top: 0;
+        bottom: 0;
+        width: 100%;
+      }
+
+      .info {
+        position: absolute;
+        bottom: 0;
+        right: 0;
+        background: rgba(255, 255, 255, 0.8);
+        margin: 0;
+        padding: 0 5px;
+        font: 12px/1.5 "Helvetica Neue", Arial, Helvetica, sans-serif;
+        font-size: 11px;
+      }
+
+      .info a {
+        color: #0099d8;
+      }
+
+      .info a:visited {
+        color: #0099d8;
+      }
+
+      .mapboxgl-ctrl-group {
+        border-radius: 1px;
+        -webkit-box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2), 0 -1px 0 rgba(0, 0, 0, 0.02);
+        box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2), 0 -1px 0 rgba(0, 0, 0, 0.02);
+      }
+
+      /* ---------------------------- */
+      /* ---------- marker ---------- */
+      /* ---------------------------- */
+
+      .marker-arrow {
+        width: 30px;
+        height: 30px;
+        border-radius: 50% 50% 50% 0;
+        background-color: #2999fd;
+        transform: rotate(-45deg);
+        margin: -36px 0 0 0;
+      }
+
+      .marker-arrow::after {
+        content: '';
+        width: 14px;
+        height: 14px;
+        margin: 8px 0 0 8px;
+        background-color: #fff;
+        position: absolute;
+        border-radius: 50%;
+      }
+
+      .marker-pulse {
+        border-radius: 50%;
+        height: 14px;
+        width: 14px;
+        position: absolute;
+        left: 50%;
+        top: 50%;
+        margin: -4px 0 0 -7px;
+        transform: rotateX(55deg);
+        z-index: -2;
+      }
+
+      .marker-pulse:after {
+        content: "";
+        border-radius: 50%;
+        height: 40px;
+        width: 40px;
+        position: absolute;
+        margin: -13px 0 0 -13px;
+        animation: pelias-ctrl-pulsate 1s ease-out;
+        animation-iteration-count: infinite;
+        opacity: 0;
+        box-shadow: 0 0 1px 2px #2999fd;
+      }
+
+      @keyframes pelias-ctrl-pulsate {
+        0% {
+          transform: scale(0.1, 0.1);
+          opacity: 0;
         }
-        .info a { color: #0099d8; }
-        .info a:visited { color: #0099d8; }
-        .mapboxgl-ctrl-group {
-          border-radius: 1px;
-          -webkit-box-shadow: 0 2px 4px rgba(0,0,0,0.2), 0 -1px 0px rgba(0,0,0,0.02);
-          box-shadow: 0 2px 4px rgba(0,0,0,0.2), 0 -1px 0px rgba(0,0,0,0.02);
+        50% {
+          opacity: 1;
+          filter: none;
         }
+        100% {
+          transform: scale(1.2, 1.2);
+          opacity: 0;
+        }
+      }
     </style>
-</head>
-<body>
+  </head>
+  <body>
+    <div id='map'></div>
+    <div class='info'>
+      © <a href='https://www.openstreetmap.org/copyright' target='_blank'>OpenStreetMap contributors</a> |
+      <a href='http://jawg.io' title='Jawg map style' target='_blank'>Jawg</a>
+    </div>
+    <script>
+      (function (i, s, o, g, r, a, m) {
+        i['GoogleAnalyticsObject'] = r;
+        i[r] = i[r] || function () {
+          (i[r].q = i[r].q || []).push(arguments)
+        }, i[r].l = 1 * new Date();
+        a = s.createElement(o),
+          m = s.getElementsByTagName(o)[0];
+        a.async = 1;
+        a.src = g;
+        m.parentNode.insertBefore(a, m)
+      })(window, document, 'script', 'https://www.google-analytics.com/analytics.js', 'ga');
 
-<div id='map'></div>
-<div class='info'>
-  © <a href='https://www.openstreetmap.org/copyright' target='_blank'>OpenStreetMap contributors</a> |
-  <a href='http://jawg.io' title='Jawg map style' target='_blank'>Jawg</a>
-</div>
+      ga('create', 'UA-99119327-1', 'auto');
+      ga('send', 'pageview');
+    </script>
+    <script>
+      mapboxgl.accessToken = '*';
+      var map = new mapboxgl.Map({
+        container: 'map',
+        style: 'https://tile.jawg.io/a39bae71-d86c-4477-b4ba-8e6e24390cc6.json?access-token=P4QzOCt4wWfPKfuPuMF1UQSupLKLsO7ZC4DBRF6GAoC0AcaSAKRvD4v2vix948q7',
+        hash: true,
+        zoom: 8,
+        minZoom: 0,
+        maxZoom: 22,
+        center: [2.3590, 48.8625]
+      });
+      map.addControl(new mapboxgl.NavigationControl());
+      map.addControl(new mapboxgl.ScaleControl());
 
-<script>
-  (function(i, s, o, g, r, a, m) {
-    i['GoogleAnalyticsObject'] = r;
-    i[r] = i[r] || function() {
-      (i[r].q = i[r].q || []).push(arguments)
-    }, i[r].l = 1 * new Date();
-    a = s.createElement(o),
-      m = s.getElementsByTagName(o)[0];
-    a.async = 1;
-    a.src = g;
-    m.parentNode.insertBefore(a, m)
-  })(window, document, 'script', 'https://www.google-analytics.com/analytics.js', 'ga');
+      var iconMarkerWrapper = document.createElement('div');
+      var iconMarker = document.createElement('div');
+      iconMarker.className = 'marker-arrow';
+      var iconMarkerPulse = document.createElement('div');
+      iconMarkerPulse.className = 'marker-pulse';
+      iconMarkerWrapper.appendChild(iconMarker);
+      iconMarkerWrapper.appendChild(iconMarkerPulse);
 
-  ga('create', 'UA-99119327-1', 'auto');
-  ga('send', 'pageview');
-</script>
-
-<script>
-mapboxgl.accessToken = '*';
- var map = new mapboxgl.Map({
-   container: 'map',
-   style: 'https://tile.jawg.io/a39bae71-d86c-4477-b4ba-8e6e24390cc6.json?access-token=P4QzOCt4wWfPKfuPuMF1UQSupLKLsO7ZC4DBRF6GAoC0AcaSAKRvD4v2vix948q7',
-   hash: true,
-   zoom: 8,
-   minZoom: 0,
-   maxZoom: 22,
-   hash: true,
-   center: [2.3590, 48.8625]
- });
-
- map.addControl(new mapboxgl.NavigationControl());
- map.addControl(new mapboxgl.ScaleControl());
- map.addControl(new PeliasGeocoder({
-     params: { 'access-token': 'P4QzOCt4wWfPKfuPuMF1UQSupLKLsO7ZC4DBRF6GAoC0AcaSAKRvD4v2vix948q7' },
-     flyTo: 'hybrid',
-     marker: true,
-     wof: true,
-     url: 'https://places.jawg.io/v1'
- }));
-</script>
-
-</body>
+      map.addControl(new PeliasGeocoder({
+        params: {'access-token': 'P4QzOCt4wWfPKfuPuMF1UQSupLKLsO7ZC4DBRF6GAoC0AcaSAKRvD4v2vix948q7'},
+        flyTo: 'hybrid',
+        wof: true,
+        url: 'https://places.jawg.io/v1',
+        useFocusPoint: true,
+        marker: {
+          icon: iconMarkerWrapper,
+          multiple: false
+        }
+      }));
+    </script>
+  </body>
 </html>
