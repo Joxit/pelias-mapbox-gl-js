@@ -1,60 +1,94 @@
-.pelias-ctrl-geocoder, .pelias-ctrl-geocoder *, .pelias-ctrl-geocoder *:after, .pelias-ctrl-geocoder *:before {
-  -webkit-box-sizing: border-box;
-  -moz-box-sizing: border-box;
+/* ---------------------------- */
+/* ---------- global ---------- */
+/* ---------------------------- */
+
+.pelias-ctrl, .pelias-ctrl * {
   box-sizing: border-box;
 }
 
-.pelias-ctrl-geocoder {
+.pelias-ctrl {
   font: 16px 'Helvetica Neue', Arial, Helvetica, sans-serif;
-  position: relative;
   background-color: #fff;
-  width: 33.3333%;
+  width: calc(100% / 3);
   min-width: 328px;
   max-width: 420px;
   z-index: 1;
-  border-radius: 1px;
-  box-shadow: 0 2px 4px rgba(0,0,0,0.2), 0 -1px 0px rgba(0,0,0,0.02);
+  border-radius: 2px;
+  overflow: hidden;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2), 0 -1px 0 rgba(0, 0, 0, 0.02);
 }
 
-.pelias-ctrl-geocoder input {
-  font-size: 12px;
+.pelias-ctrl .disabled {
+  opacity: 0.4;
+  cursor: initial;
+}
+
+/* --------------------------- */
+/* ---------- input ---------- */
+/* --------------------------- */
+
+.pelias-ctrl .input-wrapper {
   width: 100%;
+  float: left;
+}
+
+.pelias-ctrl .input-actions-wrapper {
+  padding: 5px 5px 5px 0;
+  float: left;
+}
+
+.pelias-ctrl input {
+  font-size: 12px;
+  float: left;
+  width: calc(100% - 37px);
   border: 0;
   height: 42px;
   margin: 0;
-  padding: 10px 10px 10px 40px;
+  padding: 10px;
   text-overflow: ellipsis;
   white-space: nowrap;
   overflow: hidden;
 }
 
-.pelias-ctrl-geocoder input:focus {
+.pelias-ctrl input:focus {
   outline: 0;
   box-shadow: none;
 }
 
-.pelias-ctrl-geocoder .geocoder-icon-search {
-  position: absolute;
-  top: 10px;
-  left: 10px;
+/* ------------------------------------ */
+/* ---------- input - action ---------- */
+/* ------------------------------------ */
+
+.pelias-ctrl .action-icon:not(:last-child) {
+  border-right: 1px solid #dddddd;
 }
 
-.pelias-geocode-results div:hover {
-  background-color: #ddd;
+.pelias-ctrl .action-icon-search {
+  width: 32px;
+  height: 32px;
+  display: block;
+  cursor: pointer;
+  background: url(data:image/svg+xml;base64,PHN2ZyB4bWxuczpzdmc9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIiB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSIyMCIgaGVpZ2h0PSIyMCIgdmVyc2lvbj0iMS4xIj4NCiAgPHBhdGggZD0iTTguNSA0QzYgNCA0IDYgNCA4LjUgNCAxMSA2IDEzIDguNSAxMyA5LjQgMTMgMTAuMiAxMi44IDEwLjggMTIuM0wxMC45IDEyLjMgMTQuMyAxNS43QzE0LjUgMTUuOSAxNC43IDE2IDE1IDE2IDE1LjYgMTYgMTYgMTUuNiAxNiAxNSAxNiAxNC43IDE1LjkgMTQuNSAxNS43IDE0LjNMMTIuMyAxMC45IDEyLjMgMTAuOEMxMi44IDEwLjIgMTMgOS40IDEzIDguNSAxMyA2IDExIDQgOC41IDR6TTguNSA1LjVDMTAuMiA1LjUgMTEuNSA2LjggMTEuNSA4LjUgMTEuNSAxMC4yIDEwLjIgMTEuNSA4LjUgMTEuNSA2LjggMTEuNSA1LjUgMTAuMiA1LjUgOC41IDUuNSA2LjggNi44IDUuNSA4LjUgNS41eiIgZmlsbD0iIzAwMCIvPg0KPC9zdmc+) center no-repeat;
+  background-size: 80%;
+}
+
+/* ----------------------------- */
+/* ---------- results ---------- */
+/* ----------------------------- */
+
+.pelias-ctrl .result {
+  border-top: 1px solid #dddddd;
+  padding: 5px;
+  float: left;
+  width: 100%;
+}
+
+.pelias-ctrl .result:hover {
+  background-color: #dddddd;
   cursor: pointer;
 }
 
-.pelias-geocode-results div {
-  border-top: 1px solid rgba(0,0,0,0.1);
-  padding: 5px;
-}
-
-.geocoder-icon {
-  width: 21px;
-  height: 21px;
-  background-repeat: no-repeat;
-}
-
-.geocoder-icon-search {
-  background-image: url(data:image/svg+xml;base64,PHN2ZyB4bWxuczpzdmc9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIiB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSIyMCIgaGVpZ2h0PSIyMCIgdmVyc2lvbj0iMS4xIj4NCiAgPHBhdGggZD0iTTguNSA0QzYgNCA0IDYgNCA4LjUgNCAxMSA2IDEzIDguNSAxMyA5LjQgMTMgMTAuMiAxMi44IDEwLjggMTIuM0wxMC45IDEyLjMgMTQuMyAxNS43QzE0LjUgMTUuOSAxNC43IDE2IDE1IDE2IDE1LjYgMTYgMTYgMTUuNiAxNiAxNSAxNiAxNC43IDE1LjkgMTQuNSAxNS43IDE0LjNMMTIuMyAxMC45IDEyLjMgMTAuOEMxMi44IDEwLjIgMTMgOS40IDEzIDguNSAxMyA2IDExIDQgOC41IDR6TTguNSA1LjVDMTAuMiA1LjUgMTEuNSA2LjggMTEuNSA4LjUgMTEuNSAxMC4yIDEwLjIgMTEuNSA4LjUgMTEuNSA2LjggMTEuNSA1LjUgMTAuMiA1LjUgOC41IDUuNSA2LjggNi44IDUuNSA4LjUgNS41eiIgZmlsbD0iIzAwMCIvPg0KPC9zdmc+);
+.pelias-ctrl .result:focus {
+  background-color: #dddddd;
+  outline: none;
 }
