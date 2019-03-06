@@ -51,29 +51,30 @@ function PeliasGeocoder(opts) {
 
 PeliasGeocoder.prototype.onAdd = function (map) {
   this._map = map;
+  const wrapperEl = this._createElement({class: 'pelias-ctrl mapboxgl-ctrl'});
+  const inputWrapperEl = this._createElement({class: 'input-wrapper'});
+  const inputActionsWrapperEl = this._createElement({class: 'input-actions-wrapper'});
 
-  this._wrapperEl = document.createElement('div');
-  this._wrapperEl.className = 'pelias-ctrl mapboxgl-ctrl';
+  this._iconSearchEl = this._buildIconSearchHTMLElement();
+  this._inputEl = this._buildInputHTMLElement();
+  this._resultsEl = this._buildResultsHTMLElement();
 
-  this._buildIconSearchHTMLElement();
+  inputActionsWrapperEl.appendChild(this._iconSearchEl);
+  inputWrapperEl.appendChild(this._inputEl);
+  inputWrapperEl.appendChild(inputActionsWrapperEl);
+  wrapperEl.appendChild(inputWrapperEl);
+  wrapperEl.appendChild(this._resultsEl);
 
-  this._inputWrapperEl = document.createElement('div');
-  this._inputWrapperEl.className = 'input-wrapper';
-
-  this._inputActionsWrapperEl = document.createElement('div');
-  this._inputActionsWrapperEl.className = 'input-actions-wrapper';
-
-  this._buildInputHTMLElement();
-  this._buildResultsHTMLElement();
-
-  this._inputActionsWrapperEl.appendChild(this._iconSearchEl);
-  this._inputWrapperEl.appendChild(this._inputEl);
-  this._inputWrapperEl.appendChild(this._inputActionsWrapperEl);
-  this._wrapperEl.appendChild(this._inputWrapperEl);
-  this._wrapperEl.appendChild(this._resultsEl);
-
-  return this._wrapperEl;
+  return wrapperEl;
 };
+
+PeliasGeocoder.prototype.getDefaultPosition = function () {
+  return 'top-left'
+};
+
+// ----------------------------
+// ---------- search ----------
+// ----------------------------
 
 PeliasGeocoder.prototype.search = function (opts, callback) {
   opts = opts || {};
@@ -90,16 +91,13 @@ PeliasGeocoder.prototype.search = function (opts, callback) {
   this._sendXmlHttpRequest(url, callback);
 };
 
-PeliasGeocoder.prototype.getDefaultPosition = function () {
-  return 'top-left'
-};
-
 PeliasGeocoder.prototype._showResults = function (results) {
+  const self = this;
+  const features = this._removeDuplicates(results.features);
+
   this._resultsEl.removeAll();
-  var features = this._removeDuplicates(results.features);
   this._disableOrNotIcon(this._iconSearchEl, features.length === 0);
 
-  var self = this;
   features.forEach(function (feature, index) {
     self._resultsEl.appendChild(self._buildAndGetResult(feature, index));
     if (self.opts.marker.multiple) {
@@ -108,26 +106,15 @@ PeliasGeocoder.prototype._showResults = function (results) {
   })
 };
 
-PeliasGeocoder.prototype._useFlyTo = function (cameraOpts) {
-  if (this.opts.flyTo === 'hybrid') {
-    return this._areNear(cameraOpts.center, this._coordinatesToArray(this._map.getCenter()), this._getFlyToToleranceByZoom(this._map.getZoom()));
-  }
-  return this.opts.flyTo;
-};
-
-PeliasGeocoder.prototype._getFlyToToleranceByZoom = function (zoom) {
-  return zoom < 3 ? 360 : 160 / Math.pow(zoom + 1, 2);
-};
-
 PeliasGeocoder.prototype._removeDuplicates = function (features) {
-  var groupBy = {};
+  const self = this;
+  const groupBy = {};
   if (!this.opts.removeDuplicates) {
     return features;
   }
 
-  var self = this;
   features.forEach(function (feature) {
-    var label = feature.properties.label;
+    const label = feature.properties.label;
     if (!groupBy[label]) {
       groupBy[label] = []
     }
@@ -153,42 +140,76 @@ PeliasGeocoder.prototype._removeDuplicates = function (features) {
 };
 
 PeliasGeocoder.prototype._showError = function (error) {
-  var errorEl = document.createElement('div');
+  const errorEl = document.createElement('div');
   errorEl.innerHTML = error;
   this._resultsEl.removeAll();
   this._resultsEl.appendChild(errorEl);
 };
 
-PeliasGeocoder.prototype._areNear = function (c1, c2, tolerance) {
-  return this._between(c1[0], c2[0] - tolerance, c2[0] + tolerance) && this._between(c1[1], c2[1] - tolerance, c2[1] + tolerance);
-};
-
-PeliasGeocoder.prototype._coordinatesToArray = function (coordinates) {
-  return [coordinates.lng, coordinates.lat];
-};
-
-PeliasGeocoder.prototype._between = function (x, min, max) {
-  return x >= min && x <= max;
-};
-
-PeliasGeocoder.prototype._getBestZoom = function (feature) {
-  var bbox = feature.bbox;
-  if (!bbox) {
-    return (['address', 'venue', 'street'].indexOf(feature.properties.layer) > -1) ? 18 : 14;
+PeliasGeocoder.prototype._goToFeatureLocation = function (feature) {
+  this._results = undefined;
+  this._disableOrNotIcon(this._iconSearchEl, true);
+  this._resultsEl.removeAll();
+  this._text = this._inputEl.value = feature.properties.label;
+  const cameraOpts = {
+    center: feature.geometry.coordinates,
+    zoom: this._getBestZoom(feature)
+  };
+  if (this._useFlyTo(cameraOpts)) {
+    this._map.flyTo(cameraOpts);
+  } else {
+    this._map.jumpTo(cameraOpts);
   }
-  var abs = Math.abs(bbox[2] - bbox[0]) * Math.abs(bbox[3] - bbox[1]);
-  return abs !== 0 ? 8.5 - Math.log10(abs) : 8.5;
+  if (feature.properties.source === 'whosonfirst' && ['macroregion', 'region', 'macrocounty', 'county', 'locality', 'localadmin', 'borough', 'macrohood', 'neighbourhood', 'postalcode'].indexOf(feature.properties.layer) >= 0) {
+    this._showPolygon(feature.properties.id, cameraOpts.zoom);
+  } else {
+    this._removePolygon();
+  }
 };
 
-PeliasGeocoder.prototype._removeSources = function (enabled, layer) {
-  if (!enabled) {
+// -----------------------------
+// ---------- polygon ----------
+// -----------------------------
+
+PeliasGeocoder.prototype._showPolygon = function (id, bestZoom) {
+  if (!this.opts.wof) {
     return;
   }
-  if (this._map.getSource(layer)) {
-    this._map.removeLayer(layer);
-    this._map.removeSource(layer);
+  this._removePolygon();
+  this._map.addLayer({
+    id: this.polygonLayerId,
+    type: "fill",
+    source: {
+      type: "geojson",
+      data: this.getWOFURL(id)
+    },
+    paint: {
+      "fill-color": this.opts.wof.fillColor,
+      "fill-outline-color": this.opts.wof.fillOutlineColor,
+      "fill-opacity": {
+        stops: [[bestZoom + 3, 1], [bestZoom + 4, 0]]
+      }
+    }
+  })
+};
+
+PeliasGeocoder.prototype.getDefaultWOFURLFunction = function () {
+  const self = this;
+  return function (id) {
+    var strId = id.toString();
+    var parts = [];
+    while (strId.length) {
+      var part = strId.substr(0, 3);
+      parts.push(part);
+      strId = strId.substr(3);
+    }
+    return self.opts.wof.url + parts.join('/') + '/' + id + '.geojson';
   }
 };
+
+// ----------------------------
+// ---------- marker ----------
+// ----------------------------
 
 PeliasGeocoder.prototype._updateMarkers = function (features) {
   if (!this.opts.marker) {
@@ -222,63 +243,6 @@ PeliasGeocoder.prototype._updateMarkers = function (features) {
   }
 };
 
-PeliasGeocoder.prototype._showPolygon = function (id, bestZoom) {
-  if (!this.opts.wof) {
-    return;
-  }
-  this._removePolygon();
-  this._map.addLayer({
-    id: this.polygonLayerId,
-    type: "fill",
-    source: {
-      type: "geojson",
-      data: this.getWOFURL(id)
-    },
-    paint: {
-      "fill-color": this.opts.wof.fillColor,
-      "fill-outline-color": this.opts.wof.fillOutlineColor,
-      "fill-opacity": {
-        stops: [[bestZoom + 3, 1], [bestZoom + 4, 0]]
-      }
-    }
-  })
-};
-
-PeliasGeocoder.prototype.getDefaultWOFURLFunction = function () {
-  var self = this;
-  return function (id) {
-    var strId = id.toString();
-    var parts = [];
-    while (strId.length) {
-      var part = strId.substr(0, 3);
-      parts.push(part);
-      strId = strId.substr(3);
-    }
-    return self.opts.wof.url + parts.join('/') + '/' + id + '.geojson';
-  }
-};
-
-PeliasGeocoder.prototype._goToFeatureLocation = function (feature) {
-  this._results = undefined;
-  this._disableOrNotIcon(this._iconSearchEl, true);
-  this._resultsEl.removeAll();
-  this._text = this._inputEl.value = feature.properties.label;
-  var cameraOpts = {
-    center: feature.geometry.coordinates,
-    zoom: this._getBestZoom(feature)
-  };
-  if (this._useFlyTo(cameraOpts)) {
-    this._map.flyTo(cameraOpts);
-  } else {
-    this._map.jumpTo(cameraOpts);
-  }
-  if (feature.properties.source === 'whosonfirst' && ['macroregion', 'region', 'macrocounty', 'county', 'locality', 'localadmin', 'borough', 'macrohood', 'neighbourhood', 'postalcode'].indexOf(feature.properties.layer) >= 0) {
-    this._showPolygon(feature.properties.id, cameraOpts.zoom);
-  } else {
-    this._removePolygon();
-  }
-};
-
 PeliasGeocoder.prototype._addAndGetCustomHtmlMarker = function (coordinates) {
   return new mapboxgl.Marker(this.opts.marker.icon.cloneNode(true))
     .setLngLat(coordinates)
@@ -299,31 +263,42 @@ PeliasGeocoder.prototype._removeMarkers = function () {
   }
 };
 
-PeliasGeocoder.prototype._buildIconSearchHTMLElement = function () {
-  var self = this;
-  this._iconSearchEl = document.createElement('span');
-  this._iconSearchEl.className = 'action-icon action-icon-search disabled';
+// --------------------------
+// ---------- HTML ----------
+// --------------------------
 
-  this._iconSearchEl.addEventListener("click", function () {
+PeliasGeocoder.prototype._createElement = function(opts) {
+  const element = document.createElement(opts.type || 'div');
+  opts.class !== undefined && (element.className = opts.class);
+  opts.html !== undefined && (element.innerHTML = opts.html);
+  return element;
+};
+
+PeliasGeocoder.prototype._buildIconSearchHTMLElement = function () {
+  const self = this;
+  const iconSearchEl = this._createElement({type: 'span', class: 'action-icon action-icon-search disabled'});
+
+  iconSearchEl.addEventListener('click', function () {
     if (self._results && self._results.features[0]) {
-      var feature = self._results.features[0];
+      const feature = self._results.features[0];
       self._goToFeatureLocation(feature);
       self._updateMarkers(feature);
     }
   });
+  return iconSearchEl;
 };
 
 PeliasGeocoder.prototype._buildInputHTMLElement = function () {
-  var self = this;
-  this._inputEl = document.createElement('input');
-  this._inputEl.type = 'text';
-  this._inputEl.placeholder = this.opts.placeholder;
+  const self = this;
+  const inputEl = document.createElement('input');
+  inputEl.type = 'text';
+  inputEl.placeholder = this.opts.placeholder;
 
-  this._inputEl.addEventListener("keydown", function (e) {
+  inputEl.addEventListener('keydown', function (e) {
     if (self._results && self._results.features[0]) {
       if (e.keyCode === self._keyCodes.enter) {
-        self._inputEl.blur();
-        var feature = self._results.features[0];
+        inputEl.blur();
+        const feature = self._results.features[0];
         self._goToFeatureLocation(feature);
         self._updateMarkers(feature);
       }
@@ -333,8 +308,8 @@ PeliasGeocoder.prototype._buildInputHTMLElement = function () {
     }
   });
 
-  this._inputEl.addEventListener('keyup', function (e) {
-    var value = self._inputEl.value;
+  inputEl.addEventListener('keyup', function (e) {
+    var value = inputEl.value;
     if (e.keyCode !== self._keyCodes.enter && (!value || value.trim().length === 0 || self._text === value.trim() || self.opts.onSubmitOnly)) {
       if (!value) {
         self._disableOrNotIcon(self._iconSearchEl, true);
@@ -361,26 +336,25 @@ PeliasGeocoder.prototype._buildInputHTMLElement = function () {
       });
     }, (self.opts.onSubmitOnly || e.keyCode === self._keyCodes.enter) ? 0 : 350);
   });
+  return inputEl;
 };
 
 PeliasGeocoder.prototype._buildResultsHTMLElement = function () {
-  this._resultsEl = document.createElement('div');
-  this._resultsEl.className = 'results';
-  this._resultsEl.removeAll = function () {
+  const resultsEl = this._createElement({class: 'results'});
+  resultsEl.removeAll = function () {
     while (this.firstChild) {
       this.removeChild(this.firstChild);
     }
   };
+  return resultsEl;
 };
 
 PeliasGeocoder.prototype._buildAndGetResult = function (feature, index) {
-  var resultEl = document.createElement('div');
-  resultEl.innerHTML = feature.properties.label;
-  resultEl.className = 'result';
+  const self = this;
+  const resultEl = this._createElement({html: feature.properties.label, class: 'result'});
   resultEl.feature = feature;
   resultEl.setAttribute("tabindex", "-1");
 
-  var self = this;
   resultEl.onclick = function () {
     self._goToFeatureLocation(feature);
     self._updateMarkers(feature);
@@ -405,8 +379,12 @@ PeliasGeocoder.prototype._buildAndGetResult = function (feature, index) {
   return resultEl;
 };
 
+// ---------------------------
+// ---------- utils ----------
+// ---------------------------
+
 PeliasGeocoder.prototype._sendXmlHttpRequest = function (url, callback) {
-  var req = new XMLHttpRequest();
+  const req = new XMLHttpRequest();
   req.addEventListener('load', function () {
     switch (this.status) {
       case 200:
@@ -423,11 +401,53 @@ PeliasGeocoder.prototype._sendXmlHttpRequest = function (url, callback) {
   req.send();
 };
 
+PeliasGeocoder.prototype._coordinatesToArray = function (coordinates) {
+  return [coordinates.lng, coordinates.lat];
+};
+
+PeliasGeocoder.prototype._between = function (x, min, max) {
+  return x >= min && x <= max;
+};
+
+PeliasGeocoder.prototype._getBestZoom = function (feature) {
+  const bbox = feature.bbox;
+  if (!bbox) {
+    return (['address', 'venue', 'street'].indexOf(feature.properties.layer) > -1) ? 18 : 14;
+  }
+  const abs = Math.abs(bbox[2] - bbox[0]) * Math.abs(bbox[3] - bbox[1]);
+  return abs !== 0 ? 8.5 - Math.log10(abs) : 8.5;
+};
+
 PeliasGeocoder.prototype._disableOrNotIcon = function (icon, mustBeDisabled) {
-  var iconIsDisabled = icon.classList.contains('disabled');
+  const iconIsDisabled = icon.classList.contains('disabled');
   if (iconIsDisabled && !mustBeDisabled) {
     icon.classList.remove('disabled');
   } else if (!iconIsDisabled && mustBeDisabled) {
     icon.classList.add('disabled');
+  }
+};
+
+PeliasGeocoder.prototype._useFlyTo = function (cameraOpts) {
+  if (this.opts.flyTo === 'hybrid') {
+    return this._areNear(cameraOpts.center, this._coordinatesToArray(this._map.getCenter()), this._getFlyToToleranceByZoom(this._map.getZoom()));
+  }
+  return this.opts.flyTo;
+};
+
+PeliasGeocoder.prototype._getFlyToToleranceByZoom = function (zoom) {
+  return zoom < 3 ? 360 : 160 / Math.pow(zoom + 1, 2);
+};
+
+PeliasGeocoder.prototype._areNear = function (c1, c2, tolerance) {
+  return this._between(c1[0], c2[0] - tolerance, c2[0] + tolerance) && this._between(c1[1], c2[1] - tolerance, c2[1] + tolerance);
+};
+
+PeliasGeocoder.prototype._removeSources = function (enabled, layer) {
+  if (!enabled) {
+    return;
+  }
+  if (this._map.getSource(layer)) {
+    this._map.removeLayer(layer);
+    this._map.removeSource(layer);
   }
 };
