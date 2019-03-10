@@ -7,6 +7,7 @@
     <script src='https://api.tiles.mapbox.com/mapbox-gl-js/v0.44.2/mapbox-gl.js'></script>
     <link href='https://api.tiles.mapbox.com/mapbox-gl-js/v0.44.2/mapbox-gl.css' rel='stylesheet'/>
     <script src='../pelias-geocoder.js'></script>
+    <link href="https://fonts.googleapis.com/css?family=Roboto:300,400,500" rel="stylesheet">
     <link rel='stylesheet' href='../pelias-geocoder.css' type='text/css'/>
     <style>
       body {
@@ -44,6 +45,18 @@
         border-radius: 1px;
         -webkit-box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2), 0 -1px 0 rgba(0, 0, 0, 0.02);
         box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2), 0 -1px 0 rgba(0, 0, 0, 0.02);
+      }
+
+      /* -------------------------- */
+      /* ---------- font ---------- */
+      /* -------------------------- */
+
+      .pelias-ctrl, .pelias-ctrl input {
+        font: 400 14px 'Roboto', 'Helvetica Neue', Arial, Helvetica, sans-serif;
+      }
+
+      .pelias-ctrl .pelias-ctrl-result .pelias-ctrl-bold {
+        font-weight: 500;
       }
 
       /* ---------------------------- */
@@ -146,13 +159,10 @@
       map.addControl(new mapboxgl.NavigationControl());
       map.addControl(new mapboxgl.ScaleControl());
 
-      var iconMarkerWrapper = document.createElement('div');
-      var iconMarker = document.createElement('div');
-      iconMarker.className = 'marker-arrow';
-      var iconMarkerPulse = document.createElement('div');
-      iconMarkerPulse.className = 'marker-pulse';
-      iconMarkerWrapper.appendChild(iconMarker);
-      iconMarkerWrapper.appendChild(iconMarkerPulse);
+      // Custom marker
+      var iconMarkerEl = document.createElement("div");
+      iconMarkerEl.innerHTML = "<div class='marker-arrow'></div>" +
+        "<div class='marker-pulse'></div>";
 
       map.addControl(new PeliasGeocoder({
         params: {'access-token': 'P4QzOCt4wWfPKfuPuMF1UQSupLKLsO7ZC4DBRF6GAoC0AcaSAKRvD4v2vix948q7'},
@@ -161,7 +171,7 @@
         url: 'https://places.jawg.io/v1',
         useFocusPoint: true,
         marker: {
-          icon: iconMarkerWrapper,
+          icon: iconMarkerEl,
           multiple: false
         }
       }));
