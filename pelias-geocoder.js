@@ -113,7 +113,7 @@ PeliasGeocoder.prototype._showResults = function (results) {
 
   features.forEach(function (feature, index) {
     self._resultsListEl.appendChild(self._buildAndGetResult(feature, index));
-    if (self.opts.marker.multiple) {
+    if (self.opts.marker && self.opts.marker.multiple) {
       self._updateMarkers(features);
     }
   })
@@ -465,6 +465,7 @@ PeliasGeocoder.prototype._layerToIcon = function (layer) {
 };
 
 PeliasGeocoder.prototype._boldingPartsOfStringAccordingToTheSearch = function (label, search) {
+  if (!search) return this._createElement({type: 'span', html: label});
   var labelSplit = label.toLowerCase().split(search.toLowerCase());
   var spanWrapperEl = this._createElement({type: "span"});
   var index = -1;
