@@ -589,3 +589,5 @@ PeliasGeocoder.prototype._clearAll = function () {
   this._removeMarkers();
   this._removePolygon();
 };
+
+if (typeof module !== 'undefined') { module.exports = PeliasGeocoder; }
