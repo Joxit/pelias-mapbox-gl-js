@@ -17,4 +17,4 @@ Pelias Geocoding API plugin for Mapbox GL JS maps.
 -   Add polygon for localities objects from wof. (`opts.wof`: Object or Boolean)
 -   0 dependencies.
 
-## [GitHub Pages](https://joxit.github.io/pelias-mapbox-gl-js) and [Live Demo](https://joxit.github.io/pelias-mapbox-gl-js/demo)
+## [GitHub Pages](https://joxit.dev/pelias-mapbox-gl-js) and [Live Demo](https://joxit.dev/pelias-mapbox-gl-js/demo)
