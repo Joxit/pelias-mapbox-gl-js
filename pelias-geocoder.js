@@ -24,7 +24,7 @@ function PeliasGeocoder(opts) {
 
   if (opts.wof) {
     this.opts.wof = {};
-    this.opts.wof.url = opts.wof.url || 'https://raw.githubusercontent.com/whosonfirst-data/whosonfirst-data/master/data/';
+    this.opts.wof.url = opts.wof.url || 'https://raw.githubusercontent.com/whosonfirst-data/whosonfirst-data-admin-$country/master/data/';
     this.opts.wof.fillColor = opts.wof.fillColor || "rgba(200, 40, 32, 0.1)";
     this.opts.wof.fillOutlineColor = opts.wof.fillOutlineColor || "rgba(200, 40, 32, 0.7)";
     this.getWOFURL = opts.wof.getWOFURL || this.getDefaultWOFURLFunction();
@@ -178,7 +178,7 @@ PeliasGeocoder.prototype._goToFeatureLocation = function (feature) {
   }
   this._updateMarkers(feature);
   if (feature.properties.source === 'whosonfirst' && ['macroregion', 'region', 'macrocounty', 'county', 'locality', 'localadmin', 'borough', 'macrohood', 'neighbourhood', 'postalcode'].indexOf(feature.properties.layer) >= 0) {
-    this._showPolygon(feature.properties.id, cameraOpts.zoom);
+    this._showPolygon(feature.properties, cameraOpts.zoom);
   } else {
     this._removePolygon();
   }
@@ -188,7 +188,7 @@ PeliasGeocoder.prototype._goToFeatureLocation = function (feature) {
 // ---------- polygon ----------
 // -----------------------------
 
-PeliasGeocoder.prototype._showPolygon = function (id, bestZoom) {
+PeliasGeocoder.prototype._showPolygon = function (properties, bestZoom) {
   if (!this.opts.wof) {
     return;
   }
@@ -198,7 +198,7 @@ PeliasGeocoder.prototype._showPolygon = function (id, bestZoom) {
     type: "fill",
     source: {
       type: "geojson",
-      data: this.getWOFURL(id)
+      data: this.getWOFURL(properties)
     },
     paint: {
       "fill-color": this.opts.wof.fillColor,
@@ -212,15 +212,16 @@ PeliasGeocoder.prototype._showPolygon = function (id, bestZoom) {
 
 PeliasGeocoder.prototype.getDefaultWOFURLFunction = function () {
   var self = this;
-  return function (id) {
-    var strId = id.toString();
+  return function (properties) {
+    var strId = properties.id.toString();
     var parts = [];
     while (strId.length) {
       var part = strId.substr(0, 3);
       parts.push(part);
       strId = strId.substr(3);
     }
-    return self.opts.wof.url + parts.join('/') + '/' + id + '.geojson';
+    var country = properties.country_a && properties.country_a.substring(0, 2).toLowerCase()
+    return self.opts.wof.url.replace('$country', country) + parts.join('/') + '/' + properties.id + '.geojson';
   }
 };
 
