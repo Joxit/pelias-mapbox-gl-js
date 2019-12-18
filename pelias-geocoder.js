@@ -13,6 +13,7 @@ function PeliasGeocoder(opts) {
   this.opts.useFocusPoint = opts.useFocusPoint;
   this.opts.removeDuplicates = opts.removeDuplicates === undefined ? true : opts.removeDuplicates;
   this.opts.onSubmitOnly = opts.onSubmitOnly;
+  this.customAttribution = opts.customAttribution;
 
   if (opts.marker) {
     this.opts.marker = {};
@@ -117,6 +118,8 @@ PeliasGeocoder.prototype._showResults = function (results) {
       self._updateMarkers(features);
     }
   })
+  
+  self._resultsListEl.appendChild(self._createAttribution(results.geocoding, features.length))
 };
 
 PeliasGeocoder.prototype._removeDuplicates = function (features) {
@@ -502,6 +505,21 @@ PeliasGeocoder.prototype._boldingPartsOfStringAccordingToTheSearch = function (l
 
   return spanWrapperEl;
 };
+
+PeliasGeocoder.prototype._createAttribution = function(geocoding, index) {
+  var self = this;
+
+  var attributionElt = this._createElement({class: "pelias-ctrl-attribution"});
+  attributionElt.setAttribute("tabindex", "-1");
+
+  var labelWrapperEl = this._createElement({type: "span", class: "pelias-ctrl-wrapper-label"});
+
+  labelWrapperEl.innerHTML = this.customAttribution || geocoding.attribution;
+
+  attributionElt.appendChild(labelWrapperEl);
+
+  return attributionElt;
+}
 
 // ---------------------------
 // ---------- utils ----------
