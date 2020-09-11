@@ -1,6 +1,10 @@
 title: Pelias geocoding for Mapbox GL JS
+description: Add Pelias geocoding to your Mapbox GL JS map.
+url: https://joxit.dev/pelias-mapbox-gl-js/
 google_analytics: UA-99119327-1
-theme: jekyll-theme-cayman
+remote_theme: joxit/joxit.github.io
 author: Jones Magloire
 twitter:
   username: Joxit
+instagram:
+  username: jox.it
